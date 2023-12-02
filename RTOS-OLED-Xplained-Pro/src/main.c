@@ -60,6 +60,7 @@ typedef struct  {
 SemaphoreHandle_t xSemaphoreRTT;
 SemaphoreHandle_t xSemaphoreBtn;
 SemaphoreHandle_t xSemaphoreSec;
+SemaphoreHandle_t xSemaphoreAlm;
 
 /** RTOS  */
 #define TASK_OLED_STACK_SIZE (1024 * 6 / sizeof(portSTACK_TYPE))
@@ -146,10 +147,8 @@ void RTC_Handler(void) {
 	/* Time or date alarm */
 	if ((ul_status & RTC_SR_ALARM) == RTC_SR_ALARM) {
 		// o código para irq de alame vem aqui
-		pio_clear(LED_PIO_3, LED_PIO_IDX_MASK_3);
-		delay_ms(200);
-		pio_set(LED_PIO_3, LED_PIO_IDX_MASK_3);
-		delay_ms(200);
+		BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+		xSemaphoreGiveFromISR(xSemaphoreAlm, &xHigherPriorityTaskWoken);
 	}
 
 	rtc_clear_status(RTC, RTC_SCCR_SECCLR);
@@ -185,9 +184,6 @@ static void task_oled(void *pvParameters) {
 	  }
 	  
 	  if (xSemaphoreTake(xSemaphoreBtn, 1)){
-		 calendar rtc_initial = {2018, 3, 19, 12, 15, 45 ,1};
-		 RTC_init(RTC, ID_RTC, rtc_initial, RTC_IER_ALREN | RTC_IER_SECEN);
-		 
 		 uint32_t current_hour, current_min, current_sec;
 		 rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
 		 
@@ -203,7 +199,12 @@ static void task_oled(void *pvParameters) {
 		  gfx_mono_draw_string(tempo, 0, 0, &sysfont);
 	  }
 	  
-	  
+	  if (xSemaphoreTake(xSemaphoreAlm, 1)){
+		  pio_clear(LED_PIO_3, LED_PIO_IDX_MASK_3);
+		  delay_ms(200);
+		  pio_set(LED_PIO_3, LED_PIO_IDX_MASK_3);
+		  delay_ms(200);
+	  } 
   }
 }
 
@@ -361,6 +362,10 @@ int main(void) {
   
   xSemaphoreSec = xSemaphoreCreateBinary();
   if (xSemaphoreSec == NULL)
+  printf("falha em criar o semaforo \n");
+  
+  xSemaphoreAlm = xSemaphoreCreateBinary();
+  if (xSemaphoreAlm == NULL)
   printf("falha em criar o semaforo \n");
 
   /* Create task to control oled */
