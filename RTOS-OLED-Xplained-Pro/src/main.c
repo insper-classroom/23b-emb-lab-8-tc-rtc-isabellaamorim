@@ -191,7 +191,7 @@ static void task_oled(void *pvParameters) {
 	  }
 	  
 	  if (xSemaphoreTake(xSemaphoreSec, 1)){
-		  uint32_t current_hour, current_min, current_sec;
+		  int current_hour, current_min, current_sec;
 		  rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
 		  
 		  char hour[8];
