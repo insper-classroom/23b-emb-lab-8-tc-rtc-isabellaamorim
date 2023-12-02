@@ -194,8 +194,17 @@ static void task_oled(void *pvParameters) {
 		  uint32_t current_hour, current_min, current_sec;
 		  rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
 		  
-		  char tempo[32];
-		  sprintf(tempo,"%d:%d:%d",current_hour,current_min,current_sec);
+		  char hour[8];
+		  sprintf(hour,"%d",current_hour);
+		  
+		  char min[8];
+		  sprintf(min,"%d",current_min);
+		  
+		  char sec[8];
+		  sprintf(sec,"%d",current_sec);
+		  
+		  char tempo[128];
+		  sprintf(tempo,"%s:%s:%s",hour,min,sec);
 		  gfx_mono_draw_string(tempo, 0, 0, &sysfont);
 	  }
 	  
